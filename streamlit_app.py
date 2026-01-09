@@ -16,8 +16,11 @@ st.write("The name on your smoothie will be:", name_on_order)
 ctx = st.connection("snowflake")
 session = ctx.session()
 my_dataframe = session.table("smoothies.public.fruit_options").select(col('fruit_name'), col('search_on'))
-st.dataframe(data=my_dataframe, use_container_width=True)
-st.stop()
+# st.dataframe(data=my_dataframe, use_container_width=True)
+# st.stop()
+
+# Use a pandas dataframe to utilize the loc function
+pd_df = my_dataframe.to_pandas()
 
 ing_list = st.multiselect(
     'Choose up to 5 ingredients:',
@@ -29,8 +32,12 @@ if ing_list:
     ing_string = ''
     for fruit in ing_list:
         ing_string += fruit + ' '
+
+        search_on=pd_df.loc[pd_df['FRUIT_NAME'] == fruit, 'SEARCH_ON'].iloc[0]
+        st.write('The search value for ', fruit,' is ', search_on, '.')
+
         st.subheader(fruit + ' Nutrition Information')
-        smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/" + fruit)
+        smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/" + search_on)
         sf_df = st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
 
     my_insert = """insert into smoothies.public.orders(ingredients, name_on_order)
